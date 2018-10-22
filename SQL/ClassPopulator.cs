@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 
-namespace SQL
+namespace Toolbox.SQL
 {
     public class ClassPopulator
     {
