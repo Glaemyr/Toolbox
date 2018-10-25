@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
@@ -50,6 +51,7 @@ namespace Toolbox.SQL
                     foreach (PropertyInfo info in modelProperties)
                     {
                         var conversionType = Nullable.GetUnderlyingType(info.PropertyType)?? info.PropertyType;
+                        if(info.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInPopulator)))continue;
                         var value = reader[info.Name];
                         info.SetValue(item, Convert.ChangeType(value, conversionType)); //TODO: reader[info.Name] can be changed to prioritize a custom tag
                     }
@@ -63,5 +65,8 @@ namespace Toolbox.SQL
 
             return returnedObject;
         }
+    }
+    public class SkipInPopulator : System.Attribute
+    {
     }
 }
