@@ -9,16 +9,12 @@ namespace Toolbox.XML
 {
     public class ClassPopulator
     {
-        public static object MapToClassByPropertyName(XElement xml, Type rtnType, object args = null)
+        public static dynamic MapToClassByPropertyName(XElement xml, Type rtnType, object args = null)
         {
 
-            object returnedObject;
-            //if (args == typeof(Array))
-            //{
-
-            //}
-            //else
-            returnedObject = Activator.CreateInstance(rtnType);
+            
+            
+            var returnedObject = Activator.CreateInstance(rtnType);
 
 
             List<PropertyInfo> modelProperties = returnedObject.GetType().GetProperties().ToList();
@@ -58,7 +54,7 @@ namespace Toolbox.XML
                     foreach (var xElement in currentArrayElements)
                     {
                         var byPropertyName = MapToClassByPropertyName(xElement, conversionType.GetElementType());
-                        eleList.Add(Convert.ChangeType(byPropertyName, conversionType));
+                        eleList.Add(byPropertyName);
                     }
 
                     // Make list of element type, loop trhough array - insert each element - MapToClassByPropertyName(element, conversionType.GetElementType(), conversionType.BaseType)
