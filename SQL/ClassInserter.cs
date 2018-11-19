@@ -12,10 +12,12 @@ namespace Toolbox.SQL
             string tableName;
             string schemaName = "dbo";
             var classType = classToInsert.GetType();
-            if (classType.CustomAttributes.Any(a => a.AttributeType == typeof(TableName)))
+            if (classType.CustomAttributes.Any(a => a.AttributeType == typeof(Table)))
             {
-                var schemaAttribute = classType.CustomAttributes.First(a => a.AttributeType == typeof(TableName)).ConstructorArguments[0].ToString();
-                tableName = classType.CustomAttributes.First(a => a.AttributeType == typeof(TableName)).ConstructorArguments[1].ToString();
+                var schemaAttribute = classType.CustomAttributes.First(a => a.AttributeType == typeof(Table))
+                    .NamedArguments.First(n => n.MemberName == "Schema").TypedValue.Value as string;
+                tableName = classType.CustomAttributes.First(a => a.AttributeType == typeof(Table)).NamedArguments
+                    .First(n => n.MemberName == "TableName").TypedValue.Value as string;
                 if (!string.IsNullOrEmpty(schemaAttribute)) schemaName = schemaAttribute;
             }
             else
@@ -29,7 +31,7 @@ namespace Toolbox.SQL
             {
                 if (info.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInInserter))) continue;
                 insertInto += first ? info.Name : "\n," + info.Name;
-                values += first ? setQuotes(info,classToInsert) : "\n," + setQuotes(info,classToInsert).ToString();
+                values += first ? setQuotes(info, classToInsert) : "\n," + setQuotes(info, classToInsert).ToString();
                 first = false;
             }
 
@@ -57,23 +59,23 @@ namespace Toolbox.SQL
             }
             if (pType == typeof(bool))
             {
-                val = (bool) val ? "1" : "0";
+                val = (bool)val ? "1" : "0";
             }
 
             return val.ToString();
         }
     }
 
-    public class TableName : System.Attribute
+    public class Table : System.Attribute
     {
-        private string _name;
-        private string _schema;
+        public string TableName { get; set; }
+        public string Schema { get; set; }
         //private string _database;
 
-        public TableName(string name, string schema = "")
+        public Table(string tableName = "", string schema = "")
         {
-            this._name = name;
-            this._schema = schema;
+            TableName = tableName;
+            Schema = schema;
             //this._database = database;
         }
     }
