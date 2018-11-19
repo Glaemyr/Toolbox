@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
@@ -64,6 +65,24 @@ namespace Toolbox.SQL
 
 
             return returnedObject;
+        }
+
+        public static List<Dictionary<string, object>> DictionaryPopulator(SqlDataReader reader)
+        {
+            var rtn = new List<Dictionary<string, object>>();
+            while (reader.Read())
+            {
+                var dict = new Dictionary<string, object>();
+                var columns = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToList();
+                foreach (var col in columns)
+                {
+                    dict.Add(col,reader[col]);
+                }
+                rtn.Add(dict);
+            }
+
+
+            return rtn;
         }
     }
     public class SkipInPopulator : System.Attribute
