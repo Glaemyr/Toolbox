@@ -49,12 +49,14 @@ namespace Toolbox.SQL
 
         private static string setQuotes(PropertyInfo info, object obj)
         {
-            var val = info.GetValue(obj);
+            dynamic val = info.GetValue(obj);
             var pType = info.PropertyType;
-            if (pType == typeof(string) || pType == typeof(char) || pType == typeof(DateTime))
+            if (pType == typeof(string) || pType == typeof(char))
                 val = "'" + val + "'";
-            if (pType == typeof(DateTimeOffset))
-                val = "'" + ((DateTimeOffset)val).ToString("s") + "'";
+            if (pType == typeof(DateTimeOffset) || pType == typeof(DateTime))
+            {
+                val = "'" + val.ToString("s") + "'";
+            }
             if (pType == typeof(bool))
             {
                 val = (bool)val ? "1" : "0";
