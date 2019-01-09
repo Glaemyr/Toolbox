@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
@@ -62,7 +63,7 @@ namespace Toolbox.SQL
                 val = (bool)val ? "1" : "0";
             }
 
-            return val.ToString();
+            return val.ToString(CultureInfo.InvariantCulture);
         }
     }
 
