@@ -35,6 +35,8 @@ namespace Toolbox.SQL
                 if (!reader.Read()) return null;
                 foreach (PropertyInfo info in modelProperties)
                 {
+                    if (info.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInPopulator))) continue;
+
                     var conversionType = Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType;
                     var value = reader[info.Name];
                     if(value is DBNull) continue;
