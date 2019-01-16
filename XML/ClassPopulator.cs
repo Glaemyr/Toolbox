@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
@@ -69,11 +70,11 @@ namespace Toolbox.XML
                     {
                         
                         info.SetValue(returnedObject,
-                            Convert.ChangeType(MapToClassByPropertyName(newXEle, conversionType), conversionType));
+                            Convert.ChangeType(MapToClassByPropertyName(newXEle, conversionType), conversionType, CultureInfo.InvariantCulture));
                     }
                     else
                     {
-                        info.SetValue(returnedObject, Convert.ChangeType(newXEle.Value, conversionType));
+                        info.SetValue(returnedObject, Convert.ChangeType(newXEle.Value, conversionType,CultureInfo.InvariantCulture));
                     }
                 }
             }
