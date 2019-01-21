@@ -8,7 +8,7 @@ namespace Toolbox.SQL
 {
     public class ClassInserter
     {
-        public static void Insert(string connString, object classToInsert)
+        public static void Insert(string connString, object classToInsert,Table tabeSpec = null)
         {
             string tableName;
             string schemaName = "dbo";
@@ -19,6 +19,12 @@ namespace Toolbox.SQL
                     .NamedArguments.First(n => n.MemberName == "Schema").TypedValue.Value as string;
                 tableName = classType.CustomAttributes.First(a => a.AttributeType == typeof(Table)).NamedArguments
                     .First(n => n.MemberName == "TableName").TypedValue.Value as string;
+                if (!string.IsNullOrEmpty(schemaAttribute)) schemaName = schemaAttribute;
+            }
+            else if (tabeSpec != null)
+            {
+                var schemaAttribute = tabeSpec.Schema;
+                tableName = tabeSpec.TableName;
                 if (!string.IsNullOrEmpty(schemaAttribute)) schemaName = schemaAttribute;
             }
             else
