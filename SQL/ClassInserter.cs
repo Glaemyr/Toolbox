@@ -118,7 +118,7 @@ namespace Toolbox.SQL
                 }
             }
         }
-        public static void Merge(string connString, object classToInsert, string[] on, string whenMatched = null, string whenNotMatched = null, string[] update = null, Table tabeSpec = null)
+        public static void Merge(string connString, object classToInsert, string[] on, string whenMatched = null, string whenNotMatched = null, string[] update = null, Table tabeSpec = null, TimeSpan timeToLookBack = default(TimeSpan),string dateProperty = null)
         {
             if (tabeSpec == null) tabeSpec = GetTableSpec(classToInsert);
             Type classType;
@@ -142,6 +142,8 @@ namespace Toolbox.SQL
                     first = false;
                 }
 
+                if (timeToLookBack != default(TimeSpan)) onStr += $"AND TARGET.{dateProperty} < '{(DateTime.UtcNow - timeToLookBack):s}'\n";
+                
                 string values = "VALUES (";
                 string insert = "INSERT (";
                 // TODO: __UPDATE
