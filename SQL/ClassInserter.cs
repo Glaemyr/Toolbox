@@ -236,6 +236,11 @@ namespace Toolbox.SQL
         {
             dynamic val = info.GetValue(obj);
             var pType = info.PropertyType;
+            if (Nullable.GetUnderlyingType(pType) != null)
+            {
+                pType = Nullable.GetUnderlyingType(pType);
+                if (val == null) return "NULL";
+            }
             if (pType == typeof(string) || pType == typeof(char))
                 val = "'" + val + "'";
             if (pType == typeof(DateTimeOffset) || pType == typeof(DateTime))
@@ -267,5 +272,4 @@ namespace Toolbox.SQL
     public class SkipInInserter : System.Attribute
     {
     }
-
 }
