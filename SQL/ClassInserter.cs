@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
@@ -19,6 +20,7 @@ namespace Toolbox.SQL
 
         private static void Insert(string connString, object classToInsert, SqlConnection conn, Table tabeSpec = null)
         {
+
             if (tabeSpec == null) tabeSpec = GetTableSpec(classToInsert);
             if (!classToInsert.GetType().GetInterfaces().Contains(typeof(IEnumerable)))
             {
@@ -63,10 +65,35 @@ namespace Toolbox.SQL
             }
             else
             {
-                if (IsTooBig((IEnumerable)classToInsert)) throw new ArgumentOutOfRangeException("More than a 1000 rows were tried to be inserted. Toolbox currently does not support that");
-
-
                 var classType = classToInsert.GetType().GetGenericArguments()[0];
+
+                var c = (ICollection)classToInsert;
+                IEnumerator enumer;
+                var cnt = 0;
+                if (c.Count > 1000)
+                {
+                    IList items = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(classType));
+                    enumer = ((IEnumerable)classToInsert).GetEnumerator();
+                    while (enumer.MoveNext())
+                    {
+                        if (cnt % 1000 == 0 && cnt != 0)
+                        {
+                            Insert(connString, items, conn, tabeSpec);
+                            items.Clear();
+                        }
+                        items.Add(enumer.Current);
+                        cnt++;
+                    }
+
+                    if (items.Count >0)
+                    {
+                        Insert(connString, items, conn, tabeSpec);
+                    }
+                    return;
+                }
+
+
+
 
                 string insertInto = "INSERT INTO " + tabeSpec.Schema + "." + tabeSpec.TableName + "\n";
                 insertInto = insertInto.Replace("\"", "");
@@ -80,7 +107,7 @@ namespace Toolbox.SQL
 
                 }
 
-                var enumer = ((IEnumerable)classToInsert).GetEnumerator();
+                enumer = ((IEnumerable)classToInsert).GetEnumerator();
                 while (enumer.MoveNext())
                 {
 
@@ -118,7 +145,7 @@ namespace Toolbox.SQL
                 }
             }
         }
-        public static void Merge(string connString, object classToInsert, string[] on, string whenMatched = null, string whenNotMatched = null, string[] update = null, Table tabeSpec = null, TimeSpan timeToLookBack = default(TimeSpan),string dateProperty = null)
+        public static void Merge(string connString, object classToInsert, string[] on, string whenMatched = null, string whenNotMatched = null, string[] update = null, Table tabeSpec = null, TimeSpan timeToLookBack = default(TimeSpan), string dateProperty = null)
         {
             if (tabeSpec == null) tabeSpec = GetTableSpec(classToInsert);
             Type classType;
@@ -143,7 +170,7 @@ namespace Toolbox.SQL
                 }
 
                 if (timeToLookBack != default(TimeSpan)) onStr += $"AND TARGET.{dateProperty} < '{(DateTime.UtcNow - timeToLookBack):s}'\n";
-                
+
                 string values = "VALUES (";
                 string insert = "INSERT (";
                 // TODO: __UPDATE
