@@ -169,7 +169,7 @@ namespace Toolbox.SQL
                     first = false;
                 }
 
-                if (timeToLookBack != default(TimeSpan)) onStr += $"AND TARGET.{dateProperty} < '{(DateTime.UtcNow - timeToLookBack):s}'\n";
+                if (timeToLookBack != default(TimeSpan)) onStr += $"AND TARGET.{dateProperty} > '{(DateTime.UtcNow - timeToLookBack):s}'\n";
 
                 string values = "VALUES (";
                 string insert = "INSERT (";
