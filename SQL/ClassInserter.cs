@@ -85,7 +85,7 @@ namespace Toolbox.SQL
                         cnt++;
                     }
 
-                    if (items.Count >0)
+                    if (items.Count > 0)
                     {
                         Insert(connString, items, conn, tabeSpec);
                     }
@@ -269,7 +269,7 @@ namespace Toolbox.SQL
                 if (val == null) return "NULL";
             }
             if (pType == typeof(string) || pType == typeof(char))
-                val = "'" + val + "'";
+                val = val == null ? "''" : "'" + ((string) val).Replace("'", "''") + "'";
             if (pType == typeof(DateTimeOffset) || pType == typeof(DateTime))
             {
                 val = "'" + val.ToString("s") + "'";
