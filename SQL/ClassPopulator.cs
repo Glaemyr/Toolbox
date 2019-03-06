@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
@@ -17,8 +18,21 @@ namespace Toolbox.SQL
             List<PropertyInfo> modelProperties = returnedObject.GetType().GetProperties().OrderBy(p => p.MetadataToken).ToList();
             for (int i = 0; i < modelProperties.Count; i++)
             {
-                if (!reader.Read()) continue;
-                modelProperties[i].SetValue(returnedObject, Convert.ChangeType(reader.GetValue(i), modelProperties[i].PropertyType), null);
+                if (!reader.Read()) break;
+                var pType = modelProperties[i].PropertyType;
+                if (Nullable.GetUnderlyingType(pType) != null)
+                {
+                    pType = Nullable.GetUnderlyingType(pType);
+                    if (reader[i] == null || reader[i] == DBNull.Value)
+                    {
+                        modelProperties[i].SetValue(returnedObject, null, null);
+                        continue;
+                    }
+                }
+
+                var value = reader.GetValue(i);
+                modelProperties[i].SetValue(returnedObject, Convert.ChangeType(value, pType), null);
+
             }
 
             return returnedObject;
@@ -29,7 +43,10 @@ namespace Toolbox.SQL
             T returnedObject = Activator.CreateInstance<T>();
             List<PropertyInfo> modelProperties = returnedObject.GetType().GetProperties().ToList();
 
-            if (!typeof(T).GetInterfaces().Contains(typeof(IEnumerable)))
+            var type = typeof(T);
+            var methods = type.GetMethods();
+            var interfaces = type.GetInterfaces();
+            if (!methods.Any((info => info.Name == "Add")))
             {
                 //If if the type is not an IEnumerable, read 1 row and return that
                 if (!reader.Read()) return null;
@@ -46,7 +63,8 @@ namespace Toolbox.SQL
             else
             { // Else: get the first generic argument, make a list of that, add each row as an element, and return it as a T
                 Type elemType = returnedObject.GetType().GetGenericArguments()[0];
-                IList items = (IList) Activator.CreateInstance(typeof(List<>).MakeGenericType(elemType));
+                dynamic items = Activator.CreateInstance(typeof(T));
+                var method = items.GetType().GetMethod("Add");
                 while (reader.Read())
                 {
                     var item = Activator.CreateInstance(elemType);
@@ -59,7 +77,7 @@ namespace Toolbox.SQL
                         info.SetValue(item, Convert.ChangeType(value, conversionType)); //TODO: reader[info.Name] can be changed to prioritize a custom tag
                     }
 
-                    items.Add(item);
+                    items.Add((dynamic)item);
                 }
 
                 return (T) items;
