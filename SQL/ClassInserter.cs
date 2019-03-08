@@ -156,7 +156,7 @@ namespace Toolbox.SQL
             using (var conn = new SqlConnection(connString))
             {
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = $"SELECT TOP(0) * INTO #tmp_{tabeSpec.TableName} FROM {tabeSpec.Schema}.{tabeSpec.TableName}";
+                cmd.CommandText = $"SELECT TOP(0) * INTO #tmp_{tabeSpec.TableName} FROM {tabeSpec.Schema}.{tabeSpec.TableName} UNION ALL SELECT TOP(0) * FROM {tabeSpec.Schema}.{tabeSpec.TableName}";
                 conn.Open();
                 cmd.ExecuteNonQuery();
                 Insert(connString, classToInsert, conn, new Table(tableName: $"#tmp_{tabeSpec.TableName}", schema: tabeSpec.Schema));
@@ -173,16 +173,29 @@ namespace Toolbox.SQL
 
                 string values = "VALUES (";
                 string insert = "INSERT (";
-                // TODO: __UPDATE
+
+                first = true;
+                var updateStr = "UPDATE SET\n";
+                if (update != null && !update.Contains("{All}"))
+                {
+                    foreach (var s in update)
+                    {
+                        updateStr += first ? $"TARGET.{s} = SOURCE.{s}\n" : $",TARGET.{s} = SOURCE.{s}\n";
+                        first = false;
+                    }
+                }
                 first = true;
                 foreach (var info in classType.GetProperties())
                 {
-                    if (info.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInInserter))) continue;
+
+                    if (info.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInMerger))) continue;
                     insert += first ? info.Name : "\n," + info.Name;
                     values += first ? $"SOURCE.{info.Name}" : "\n," + $"SOURCE.{info.Name}";
+                    if (update != null && update.Contains("{All}")) updateStr += first ? $"TARGET.{info.Name} = SOURCE.{info.Name}\n" : $",TARGET.{info.Name} = SOURCE.{info.Name}\n";
 
                     first = false;
                 }
+
 
                 insert += ") ";
                 values += ")";
@@ -195,6 +208,7 @@ namespace Toolbox.SQL
                                   (whenNotMatched != null ? $"WHEN NOT MATCHED THEN\n {whenNotMatched}" : "");
 
                 mergeSql = mergeSql.Replace("{insert}", insert);
+                mergeSql = mergeSql.Replace("{update}", updateStr);
                 mergeSql += ";";
                 cmd.CommandText = mergeSql;
                 cmd.ExecuteNonQuery();
@@ -269,7 +283,7 @@ namespace Toolbox.SQL
                 if (val == null) return "NULL";
             }
             if (pType == typeof(string) || pType == typeof(char))
-                val = val == null ? "''" : "'" + ((string) val).Replace("'", "''") + "'";
+                val = val == null ? "''" : "'" + ((string)val).Replace("'", "''") + "'";
             if (pType == typeof(DateTimeOffset) || pType == typeof(DateTime))
             {
                 val = "'" + val.ToString("s") + "'";
@@ -297,6 +311,9 @@ namespace Toolbox.SQL
         }
     }
     public class SkipInInserter : System.Attribute
+    {
+    }
+    public class SkipInMerger : System.Attribute
     {
     }
 }
