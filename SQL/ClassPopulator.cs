@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
-using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
@@ -45,7 +42,6 @@ namespace Toolbox.SQL
 
             var type = typeof(T);
             var methods = type.GetMethods();
-            var interfaces = type.GetInterfaces();
             if (!methods.Any((info => info.Name == "Add")))
             {
                 //If if the type is not an IEnumerable, read 1 row and return that
@@ -56,7 +52,7 @@ namespace Toolbox.SQL
 
                     var conversionType = Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType;
                     var value = reader[info.Name];
-                    if(value is DBNull) continue;
+                    if (value is DBNull) continue;
                     info.SetValue(returnedObject, Convert.ChangeType(value, conversionType)); //TODO: reader[info.Name] can be changed to prioritize a custom tag
                 }
             }
@@ -71,8 +67,8 @@ namespace Toolbox.SQL
                     modelProperties = item.GetType().GetProperties().ToList();
                     foreach (PropertyInfo info in modelProperties)
                     {
-                        var conversionType = Nullable.GetUnderlyingType(info.PropertyType)?? info.PropertyType;
-                        if(info.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInPopulator)))continue;
+                        var conversionType = Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType;
+                        if (info.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInPopulator))) continue;
                         var value = reader[info.Name];
                         info.SetValue(item, Convert.ChangeType(value, conversionType)); //TODO: reader[info.Name] can be changed to prioritize a custom tag
                     }
@@ -80,7 +76,7 @@ namespace Toolbox.SQL
                     items.Add((dynamic)item);
                 }
 
-                return (T) items;
+                return (T)items;
             }
 
 
@@ -96,13 +92,62 @@ namespace Toolbox.SQL
                 var columns = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToList();
                 foreach (var col in columns)
                 {
-                    dict.Add(col,reader[col]);
+                    dict.Add(col, reader[col]);
                 }
                 rtn.Add(dict);
             }
 
 
             return rtn;
+        }
+
+        public static T MapToClass<T>(string connectionString) where T : class
+        {
+            var columnList = "";
+            var first = true;
+            foreach (var property in typeof(T).GetProperties())
+            {
+                if (property.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInPopulator))) continue;
+                columnList += first ? $"[{property.Name}]\n" : $",[{property.Name}]\n";
+                first = false;
+
+            }
+
+            var table = ClassInserter.GetTableSpec(Activator.CreateInstance<T>());
+
+            using (var conn = new SqlConnection(connectionString))
+            using (var cmd = new SqlCommand($"SELECT {columnList} FROM {table.Schema}.{table.TableName}", conn))
+            {
+                conn.Open();
+                var sqlDataReader = cmd.ExecuteReader();
+                return MapToClass<T>(sqlDataReader);
+            }
+        }
+
+        public static T MapToClassByPropertyName<T>(string connectionString) where T : class
+        {
+            var columnList = "";
+            var first = true;
+            var type = typeof(T);
+            var methods = type.GetMethods();
+            if (methods.Any((info => info.Name == "Add"))) type = type.GetGenericArguments()[0];
+            foreach (var property in type.GetProperties())
+            {
+                if (property.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInPopulator))) continue;
+                columnList += first ? $"[{property.Name}]\n" : $",[{property.Name}]\n";
+                first = false;
+
+            }
+
+            var table = ClassInserter.GetTableSpec(Activator.CreateInstance<T>());
+
+            using (var conn = new SqlConnection(connectionString))
+            using (var cmd = new SqlCommand($"SELECT {columnList} FROM {table.Schema}.{table.TableName}", conn))
+            {
+                conn.Open();
+                var sqlDataReader = cmd.ExecuteReader();
+                return MapToClassByPropertyName<T>(sqlDataReader);
+            }
         }
     }
     public class SkipInPopulator : System.Attribute

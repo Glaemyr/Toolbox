@@ -215,7 +215,7 @@ namespace Toolbox.SQL
             }
         }
 
-        private static Table GetTableSpec(object classToInsert)
+        internal static Table GetTableSpec(object classToInsert)
         {
             string tableName;
             string schemaName = "dbo";
