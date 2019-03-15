@@ -191,7 +191,7 @@ namespace Toolbox.SQL
                     if (info.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInMerger))) continue;
                     insert += first ? info.Name : "\n," + info.Name;
                     values += first ? $"SOURCE.{info.Name}" : "\n," + $"SOURCE.{info.Name}";
-                    if (update != null && update.Contains("{All}")) updateStr += first ? $"TARGET.{info.Name} = SOURCE.{info.Name}\n" : $",TARGET.{info.Name} = SOURCE.{info.Name}\n";
+                    if (update != null && update.Contains("{all}")) updateStr += first ? $"TARGET.{info.Name} = SOURCE.{info.Name}\n" : $",TARGET.{info.Name} = SOURCE.{info.Name}\n";
 
                     first = false;
                 }
