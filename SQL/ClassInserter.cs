@@ -176,7 +176,7 @@ namespace Toolbox.SQL
 
                 first = true;
                 var updateStr = "UPDATE SET\n";
-                if (update != null && !update.Contains("{All}"))
+                if (update != null && !update.Contains("{all}"))
                 {
                     foreach (var s in update)
                     {
