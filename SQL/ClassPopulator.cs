@@ -70,6 +70,7 @@ namespace Toolbox.SQL
                         var conversionType = Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType;
                         if (info.CustomAttributes.Any(a => a.AttributeType == typeof(SkipInPopulator))) continue;
                         var value = reader[info.Name];
+                        if (value == DBNull.Value) continue;
                         info.SetValue(item, Convert.ChangeType(value, conversionType)); //TODO: reader[info.Name] can be changed to prioritize a custom tag
                     }
 
