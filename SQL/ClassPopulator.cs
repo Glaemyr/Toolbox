@@ -139,8 +139,8 @@ namespace Toolbox.SQL
                 first = false;
 
             }
-
-            var table = ClassInserter.GetTableSpec(Activator.CreateInstance<T>());
+            
+            var table = ClassInserter.GetTableSpec(Activator.CreateInstance(type));
 
             using (var conn = new SqlConnection(connectionString))
             using (var cmd = new SqlCommand($"SELECT {columnList} FROM {table.Schema}.{table.TableName}", conn))
